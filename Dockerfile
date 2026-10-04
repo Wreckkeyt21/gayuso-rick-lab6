@@ -24,4 +24,9 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot ${APACHE_DOCUMENT_ROOT}|g' /etc/apache2/sites-available/000-default.conf \
 && sed -i 's|<Directory /var/www/html>|<Directory ${APACHE_DOCUMENT_ROOT}>|g' /etc/apache2/apache2.conf
  
-EXPOSE 80
+# Render provides $PORT (default 10000); make Apache listen on it
+ENV PORT=10000
+RUN sed -i 's/Listen 80/Listen ${PORT}/' /etc/apache2/ports.conf \
+&& sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/' /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 10000

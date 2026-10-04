@@ -268,6 +268,32 @@ class Database {
             PDO::ATTR_EMULATE_PREPARES   => false,
         );
 
+        // TLS for managed MySQL (Aiven requires it).
+        //   DB_SSL_CA_BASE64 = base64 of Aiven's ca.pem (best for Render)
+        //   DB_SSL_CA        = path to ca.pem (best for local dev)
+        //   DB_SSL=true      = encrypt without verifying the server certificate
+        if ($driver === 'mysql') {
+            $mysql_const = function ($name) {
+                // PHP 8.4+ moved these to Pdo\Mysql; PDO::MYSQL_ATTR_* is deprecated in 8.5
+                return class_exists('Pdo\\Mysql') ? constant('Pdo\\Mysql::ATTR_' . $name) : constant('PDO::MYSQL_ATTR_' . $name);
+            };
+            $ca     = getenv('DB_SSL_CA') ?: '';
+            $ca_b64 = getenv('DB_SSL_CA_BASE64') ?: '';
+            if ($ca_b64 !== '') {
+                $ca = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'db_ca_' . md5($ca_b64) . '.pem';
+                if (!file_exists($ca)) {
+                    file_put_contents($ca, base64_decode($ca_b64));
+                }
+            }
+            if ($ca !== '') {
+                $options[$mysql_const('SSL_CA')] = $ca;
+                $options[$mysql_const('SSL_VERIFY_SERVER_CERT')] = true;
+            } elseif (filter_var(getenv('DB_SSL'), FILTER_VALIDATE_BOOLEAN)) {
+                $options[$mysql_const('SSL_CIPHER')] = 'DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA';
+                $options[$mysql_const('SSL_VERIFY_SERVER_CERT')] = false;
+            }
+        }
+
         try {
             $this->db = new PDO($dsn, $username, $password, $options);
             $this->driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);

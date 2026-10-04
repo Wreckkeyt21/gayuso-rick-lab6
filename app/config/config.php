@@ -67,6 +67,16 @@ $config['version']                 = '4.6.0';
 $config['environment'] = getenv('APP_ENV') ?: 'development';
 
 /*
+| CORS (needed here so the OPTIONS preflight, which is answered by the
+| Router before any library loads, sees the allowed origins too).
+| FRONTEND_ORIGIN = '*' or comma-separated origins.
+*/
+$_origins = getenv('FRONTEND_ORIGIN') ?: '*';
+$config['allow_origin'] = $_origins === '*'
+    ? '*'
+    : array_values(array_filter(array_map('trim', explode(',', $_origins))));
+
+/*
 |--------------------------------------------------------------------------
 | Default Timezone
 |--------------------------------------------------------------------------

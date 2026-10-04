@@ -44,7 +44,7 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 | below (see their notes). The API library refuses to start otherwise.
 |
 */
-$config['api_helper_enabled'] = FALSE;
+$config['api_helper_enabled'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------
@@ -145,7 +145,12 @@ $config['users_table'] = 'users';
 | a browser, so set your real domain in production.
 |
 */
-$config['allow_origin'] = '*';
+// Comma-separated list of allowed frontend origins, e.g.
+// FRONTEND_ORIGIN=http://localhost:5173,https://my-app.vercel.app
+$_origins = getenv('FRONTEND_ORIGIN') ?: '*';
+$config['allow_origin'] = $_origins === '*'
+    ? '*'
+    : array_values(array_filter(array_map('trim', explode(',', $_origins))));
 
 /*
 |--------------------------------------------------------------------------
@@ -165,7 +170,7 @@ $config['refresh_token_table'] = 'refresh_tokens';
 | application's name or URL.
 |
 */
-$config['jwt_issuer'] = 'your-app';
+$config['jwt_issuer'] = 'product-management-api';
 
 /*
 |--------------------------------------------------------------------------
@@ -176,7 +181,7 @@ $config['jwt_issuer'] = 'your-app';
 |
 */
 
-$config['jwt_audience'] = 'your-app-clients';
+$config['jwt_audience'] = 'product-management-clients';
 
 /*
 |--------------------------------------------------------------------------
